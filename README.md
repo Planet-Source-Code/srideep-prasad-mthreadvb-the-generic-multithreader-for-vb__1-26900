@@ -1,0 +1,154 @@
+﻿<div align="center">
+
+## MThreadVB \- The Generic Multithreader For VB
+
+<img src="PIC2002529215441307.gif">
+</div>
+
+### Description
+
+Learn how to multithread easily and effectively with this powerful award winning component. With a host of intuitive functions and powerful ActiveX(tm) events ! To find out more, download now !!!
+ 
+### More Info
+ 
+
+
+<span>             |<span>
+---                |---
+**Submitted On**   |2002-05-30 07:12:52
+**By**             |[Srideep Prasad](https://github.com/Planet-Source-Code/PSCIndex/blob/master/ByAuthor/srideep-prasad.md)
+**Level**          |Advanced
+**User Rating**    |4.9 (1710 globes from 352 users)
+**Compatibility**  |VB 5\.0, VB 6\.0
+**Category**       |[VB function enhancement](https://github.com/Planet-Source-Code/PSCIndex/blob/master/ByCategory/vb-function-enhancement__1-25.md)
+**World**          |[Visual Basic](https://github.com/Planet-Source-Code/PSCIndex/blob/master/ByWorld/visual-basic.md)
+**Archive File**   |[MThreadVB\_882945292002\.zip](https://github.com/Planet-Source-Code/srideep-prasad-mthreadvb-the-generic-multithreader-for-vb__1-26900/archive/master.zip)
+
+
+
+
+
+### Source Code
+
+<html>
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Multithreading</title>
+</head>
+<body>
+<p><b>Multithreading in VB - Where the waters become murky....</b></p>
+<p>Multithreading, as far as VB is concerned, is very difficult to implement.
+Though VB supports multithreading, it basically supports it only for ActiveX
+EXEs and to some extent in ActiveX Dlls (The ActiveX Dlls basically allow very
+primitive multithreading - It just maps instances of itself onto client threads
+that request its services. If your client is single threaded, the DLL too does
+not multithread !)</p>
+<p>Sometime back I had demonstrated a method of multithreading using ActiveX
+EXEs. Though it is very stable, the trouble is the code tends to be very cumbersome...
+So I have designed a new generic multithreader, that, though not as stable as
+multithreaded ActiveX EXEs, is sufficient for most uses...</p>
+<p><b>A Bit of history....</b></p>
+<p>Soon after I demonstrated how to multithread using ActiveX EXEs, I realized
+that though the technique was useful, and though most of you appreciated it, it
+tended to be somewhat cumbersome and then I began to think of ways of creating
+multiple threads using other methods.... Soon afterwards, I came across an
+article written by an extremely talented and innovative programmer, Matt
+Currland (who is unfortunately not a member of PSC), where he demonstrated how
+to use CreateThread() safely with VB.. But the problem was, the example was
+very complicated and difficult to understand owing to the many class modules it
+used and the zigzag nature of execution... After hours or effort, punctuated
+by crashes, freezes and quite a few reboots, using some inspiration from his
+article I have created MThreadVB. Though it may not be as &quot;technically
+right&quot; as his code, I had to sacrifice some of the correctness for ease of
+use and the generic architecture.... (Which his code sadly did not provide - His
+was basically a demo program)</p>
+<p><b>Some Technical Stuff ....</b></p>
+<p><i><b>How does the multithreader work </b> ?! </i>You might ask - Here's the
+answer !<i><br>
+</i><br>
+Normally, all VB programs are heavily dependent on the runtime DLL for its functioning.In VB 6, within the multithreaded
+function (Called By the CreateThread() API once the thread has been created) , any calls
+to the runtime DLL fails (due to some reason perhaps which only the Microsoft VB
+team might know !) causing your program to crash immediately....<br>
+Even an API call is not really compiled in "real" native code in VB and is interpreted by the runtime DLL...<br>
+An API call too thus ultimately involves calling the runtime DLL,that causes VB to
+crash.</p>
+<p>Those of you who do not believe this can do a simple test - Open the API
+viewer, select the mciExecute API defied in the Win32API.txt file... Place it in
+a project and compile it.... Even though this API is a part of WinMM.Dll, you
+will find no reference to the WinMM.Dll in case you view the executable in the
+Depencency Viewer (since the code referencing the DLL is not placed
+&quot;explicitly&quot; in the executable. When you call the API, the actual call
+to WinMM.Dll is ultimately made by the runtime DLL only) .... But if you were to
+open the EXE in MS-DOS editor, you can see the text strings &quot;winmm.dll&quot;
+and &quot;mciExecute&quot; !</p>
+<p>Most standard VB statements and functions such as Set = , For...Next etc also call the runtime
+DLL and ultimately even these fail... (So much for native 'code compilation !)<br>
+<br>
+If an object could be created within the multithreaded procedure, the VB runtime starts behaving properly...<br>
+The trouble is,the standard VB instantiator functions fail within the multithreaded procedures...<br>
+Therefore, I have used the ThreadAPI.Tlb type library to bypass the Runtime and directly call the OLE/COM&nbsp;<br>
+APIs (This can be verified using the Dependency Viewer) and create a dummy object inside the multithreaded<br>
+procedure (using the CoCreateInstance API). After this has been done, the runtime DLL starts
+'behaving properly and it is possible to call all VB functions safely...<br>
+</p>
+<p><b>Some features and the Do's and Dont's -</b></p>
+<p>1&gt;The multithreader is <b>completely event based</b>, that is the
+multithreader notifies the client app of any event such as threads terminating,
+or the a priority change...</p>
+<p>2&gt;For creating <b>all a programmer has to to is the call the
+CreateWin32Thread() Function</b>, and relax ! So no need to fiddle around any
+more with ActiveX EXEs !</p>
+<p>3&gt;To <b>perform File I/O and to show forms from within threads </b>(which
+were earlier not supported) do the following - </p>
+<p><b><font color="#800080">&nbsp;&nbsp;&nbsp; Sub MThreadProc(DummyArgument as Variant)&nbsp;&nbsp;
+'Your multithreaded procedure<br>
+</font><font color="#008000">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Some code....<br>
+</font><font color="#800080">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; pThread.ObjectInThreadContext.<i>SomeSubroutine&nbsp;&nbsp;&nbsp;</i><br>
+&nbsp;&nbsp;&nbsp; End Sub</font></b> </p>
+<p><b>&nbsp;&nbsp;&nbsp; 'In the above code <i>SomeSubroutine</i> is a Sub or
+can be a function defined in the same form or object in which the Sub
+MThreadProc is defined (pThread is a reference to the DLL)</b> </p>
+<p><b><font color="#800080">&nbsp;&nbsp;&nbsp; Sub SomeSubRoutine&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+ </font><font color="#008000">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Your
+file I/O code or code for creating and displaying forms (Form1.Show etc) goes
+here&nbsp;<br>
+</font><font color="#800080">
+&nbsp;&nbsp;&nbsp;  End Sub</font></b> </p>
+<p><b><font color="#800080">Special Note: In the above statements, the
+ObjectInThreadContext property returns a reference to the object containing the
+multithreaded procedure in context to the new thread&nbsp;</font></b> </p>
+<p>4&gt;<b>Always call the END statement when you want to end your app</b> </p>
+<p>I must thank Robin Lobel for reporting the form show bug(it was never noticed
+by me) also Willian Tarlton who induced be to think until I got a solution, after he reported his
+extreme need for file i/o within multithreaded procedures </p>
+<p>5&gt;<b>As far as posible do not use the MThreadVB component within the IDE -
+Use it only with compiled EXEs</b> </p>
+<p>Please mail me at <a href="mailto:srideepprasad@digitalme.com">srideepprasad@digitalme.com</a>
+if you find bugs or have any suggestions</p>
+<p><font color="#000080"><b>New ! This article has been updated to include a new
+class called ThreadLaunchEX that allows multiple thread creation in real time.
+Though it has not been explained, I must say that it can be used just as the
+Thread class (used in the Demo) - Only you must identify all threads with a
+unique threadId parameter. This is not necessary if you are only using the
+simpler Thread class !</b></font></p>
+<p><b><font color="#008000">Please vote if you find the code useful... Thank You !</font></b></p>
+<hr>
+<p><font color="#800000"><b>A strange &quot;Dissappearance&quot; and a vote of
+Thanks !<br>
+</b></font>I must first of all thank all my fellow programmers and developers at
+PSC for their tremendous response to this code...&nbsp;<br>
+<br>
+ However, recently, this piece
+of code (along with almost 500 others) was deleted due to site hacking.
+Therefore, I am resubmitting it.. The good news is that Ian, one of the people
+behind PSC is sincerely pursuing this matter to bring the hacker to justice...! </p>
+<p>(For more information on the hacker attack please visit - (<span class="673172004-29052002"><font face="Arial" color="#0000ff" size="2"><a href="http://www.pscode.com/vb/scripts/ShowCode.asp?txtCodeId=35215&amp;lngWId=1">http://www.pscode.com/vb/scripts/ShowCode.asp?txtCodeId=35215&amp;lngWId=1</a>)</font></span> </p>
+</body>
+</html>
+
